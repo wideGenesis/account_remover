@@ -1,0 +1,197 @@
+trigger:
+  branches:
+    include:
+    - refs/heads/master
+name: $(date:yyyyMMdd)$(rev:.r)
+variables:
+- name: python.version
+  value: '3.8'
+- name: os.version
+  value: ubuntu-20.04
+- name: Runtime.Stack
+  value: PYTHON|3.8
+- name: Resource.Group.Name
+  value: MIH-WE-CNT-NYAC2-P-RG-01
+- name: Azure.Subscription
+  value: scmih-we-cnt-nyac2-p
+- name: WebApp.Name
+  value: MIH-WE-CNT-NYAC2-P-APP-03
+stages:
+- stage: Build
+  displayName: Build Prod stage
+  jobs:
+  - job: Build
+    displayName: Build Prod stage
+    pool:
+      vmImage: '$(os.version)'
+    steps:
+    - task: UsePythonVersion@0
+      displayName: 'Use Python $(python.version)'
+      inputs:
+        versionSpec: '$(python.version)'
+    - task: CmdLine@2
+      inputs:
+        script: |
+          python -m pip install --upgrade pip
+          pip install setup
+          pip install  --no-deps -r requirements.txt
+    - task: ArchiveFiles@2
+      displayName: 'Archive $(Build.SourcesDirectory)'
+      inputs:
+        rootFolderOrFile: '$(Build.SourcesDirectory)'
+        includeRootFolder: false
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: drop'
+    - task: AzureRmWebAppDeployment@4
+      displayName: 'Azure App Service Deploy NYAC2-P-APP-03'
+      inputs:
+        azureSubscription: '$(Azure.Subscription)'
+        appType: webAppLinux
+        WebAppName: '$(WebApp.Name)'
+        packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
+    - task: AzureAppServiceManage@0
+      displayName: 'Restart Azure App Service NYAC2-P-APP-03'
+      inputs:
+        azureSubscription: '$(Azure.Subscription)'
+        Action: 'Restart Azure App Service'
+        WebAppName: '$(WebApp.Name)'
+
+    #    - task: AzureAppServiceSettings@1
+    #        displayName: 'Upload Env Settings to WebApp YCTQ-P-APP-01'
+    #        inputs:
+    #          azureSubscription: '$(azure.Subscription)'
+    #          appName: '$(WebApp.Name)'
+    #          resourceGroupName: '$(Resource.Group.Name)'
+    #          appSettings: >-
+    #            [
+    #              {
+    #                "name": "ALLOWED_CIDR_NETS",
+    #                "value": "169.254.130.0/24",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "AZURE_SQL_DB_HOST",
+    #                "value": "mih-we-cnt-yctq-p-db-01.database.windows.net",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "AZURE_SQL_DB_NAME",
+    #                "value": "chatbot",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "AZURE_SQL_OBJECT_ID",
+    #                "value": "a3221847-6f17-479f-a3c8-e49ad62508e5",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "AZURE_STORAGE_ACCOUNT_NAME",
+    #                "value": "mihwecntyctqpstg01",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "DISABLE_COLLECTSTATIC",
+    #                "value": "false",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "DISABLE_HUGO_BUILD",
+    #                "value": "true",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "DJANGO_ALLOW_ASYNC_UNSAFE",
+    #                "value": "true",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "DJANGO_ALLOWED_HOSTS",
+    #                "value": ".azurewebsites.net,.metinvestholding.com",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "DJANGO_DEBUG",
+    #                "value": "0",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "DOMAIN",
+    #                "value": "mih-we-cnt-yctq-p-app-01.azurewebsites.net",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "FUNCTIONS_WORKER_RUNTIME",
+    #                "value": "python",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "IS_LOCAL_ENV",
+    #                "value": "0",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "KS_SMS_ON",
+    #                "value": "1",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "PROACTIVE_FLOW_TEST",
+    #                "value": "0",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "PYTHON_VERSION",
+    #                "value": "3.8",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "REDIS_APP_NAME",
+    #                "value": "MIH-WE-CNT-YCTQ-P-RC-01",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "REDIS_DB",
+    #                "value": "10",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "SCM_COMMAND_IDLE_TIMEOUT",
+    #                "value": "1800",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+    #                "value": "1",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "VIBER_WEBHOOK",
+    #                "value": "https://onboarding-bot.metinvestholding.com/",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "WEBSITE_ENABLE_SYNC_UPDATE_SITE",
+    #                "value": "true",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "WEBSITE_HEALTHCHECK_MAXPINGFAILURES",
+    #                "value": "10",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "WEBSITE_HTTPLOGGING_RETENTION_DAYS",
+    #                "value": "5",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "WEBSITE_WEBDEPLOY_USE_SCM",
+    #                "value": "true",
+    #                "slotSetting": false
+    #              },
+    #              {
+    #                "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+    #                "value": "true",
+    #                "slotSetting": false
+    #              }
+    #            ]

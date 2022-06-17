@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "account_remover"
+version = "0.1.0"
+description = "Remove all banned or fired accounts from De Vy, Yak Vy Bot"
+authors = ["WideGenesis <widegenesis@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pyodbc = ">=4.0.32"
+aioredis = ">=2.0.1"
+fastapi = "^0.78.0"
+msal = "*"
+PyJWT = "^1.7.1"
+redis = ">=4.1.4"
+requests = ">=2.25.1"
+botbuilder-core = ">=4.14.2"
+botframework-connector = ">=4.14.2"
+botframework-streaming = ">=4.14.2"
+azure-storage-blob = "*"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

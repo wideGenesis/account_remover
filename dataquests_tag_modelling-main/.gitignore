@@ -1,11 +1,3 @@
-.idea/
-config/
-data/
-local.env
-*.env
-**/*.sqlite3
-static/
-static
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -22,6 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
+lib/
 lib64/
 parts/
 sdist/
@@ -65,8 +58,8 @@ coverage.xml
 # Django stuff:
 *.log
 local_settings.py
-#db.sqlite3
-#db.sqlite3-journal
+db.sqlite3
+db.sqlite3-journal
 
 # Flask stuff:
 instance/
@@ -134,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Logs and cache data
+data/*
+
+articles/*
+notebooks/*
+utils/text_processing/*

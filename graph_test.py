@@ -1,27 +1,48 @@
+import asyncio
+import os
+import uvloop
+from graph.graph_async_client import get_user
 from graph.graph_client import client
 
+
 # client.get_msgraph_data('andrey.benimovich@metinvestholding.com ')
-print(client.get_msgraph_data('tatyana.barabash@metinvest.digital'))
-# client.get_msgraph_data('+380502767384')
+# print(client.get_msgraph_data('tatyana.barabash@metinvest.digital'))
+# res = client.get_msgraph_data('+380502767384')
+# print(res)
 
 
-"""
-viktoriya.nartenko@metinvest.digital (Заблокований ІБ тимчасово, людина на НКТ, продовжує працювати у МІД)
-{'id': 'a2d92f02-b985-4cde-8cdb-5977d7abf8b2', 'employeeId': '70000123', 
-'displayName': 'Нартенко Виктория Ивановна', 'givenName': 'Виктория', 'surname': 'Нартенко', 
-'userPrincipalName': 'viktoriya.nartenko@metinvestholding.com', 'mail': 'viktoriya.nartenko@metinvest.digital', 
-'mobilePhone': '+380675432271', 'jobTitle': 'Ведущий специалист по развитию', 'companyName': 'ООО Метинвест Диджитал', 
-'department': 'Управление функциональной экспертизы', 'createdDateTime': '2015-03-26T13:00:02Z', 
-'manager': ['Берестовенко Юрий Анатольевич', 'yuriy.berestovenko@metinvestholding.com', '+380675432849'], 
-'extensionAttribute15': 'Нет записи в AD'}
+
+async def loop_graph():
+    for i in [
+        'tatyana.barabash@metinvest.digital',
+        'viktoriya.nartenko@metinvest.digital',
+        'konstantin.zuev@metinvest.digital',
+        'y.v.nalivayko@metinvest.digital',
+        'aleksandra.dulich@metinvest.digital',
+        '70001281',
+        'viktor.malichenko@metinvest.digital',
+        'andrey.maslov@metinvest.digital',
+        'ruslan.zhemirov@metinvest.digital'
+    ]:
+        await get_user(i, False)
 
 
-tatyana.barabash@metinvest.digital (Заблокований, співробітник був на НКТ після звільнився)
-{'id': 'dd14e27a-dc2b-48bb-8473-91960df61b89', 'employeeId': '70000322', 'displayName': 'Барабаш Татьяна Сергеевна', 
-'givenName': 'Татьяна', 'surname': 'Барабаш', 'userPrincipalName': 'tatyana.barabash@metinvestholding.com', 
-'mail': 'tatyana.barabash@metinvest.digital', 'mobilePhone': '+380676296044', 'jobTitle': 'Начальник отдела', 
-'companyName': 'ООО Метинвест Диджитал', 'department': 'Отдел архитектуры и технологий', 
-'createdDateTime': '2016-07-11T10:33:53Z', 
-'manager': ['Павленко Елена Васильевна', 'E.V.Pavlenko@metinvestholding.com', '+380674452617'], 
-'extensionAttribute15': 'Нет записи в AD'}
-"""
+def run():
+
+    loop = uvloop.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    asyncio.ensure_future(loop_graph())
+
+    try:
+        loop.run_forever()
+
+    except KeyboardInterrupt:
+        print('Exit\n')
+
+    except Exception:
+        print('Runtime error')
+
+if __name__ == "__main__":
+    print('start')
+    run()

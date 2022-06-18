@@ -147,8 +147,9 @@ class GraphApi:
         endpoint = f"{self.graph_base_url}{self.user_profile_endpoint}{endpoint_ends}"
 
         try:
-            # print('>>>>>>>>>>', endpoint)
+            print('>>>>>>>>>>', endpoint)
             response = requests.get(endpoint, headers=self.bearer)
+            print('>>>>>>>>>>', response)
         except Exception as e:
             raise ex.HTTPException(status_code=299, detail=f"{e} (RequestAborted)")
 

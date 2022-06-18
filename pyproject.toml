@@ -17,6 +17,10 @@ botbuilder-core = ">=4.14.2"
 botframework-connector = ">=4.14.2"
 botframework-streaming = ">=4.14.2"
 azure-storage-blob = "*"
+msgraph-async = ">=0.1.9"
+aiohttp = "^3.8.1"
+APScheduler = "^3.9.1"
+uvloop = "^0.16.0"
 
 [tool.poetry.dev-dependencies]
 

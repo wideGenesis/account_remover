@@ -14,7 +14,7 @@ MS_BOT_PORT = 3978
 RESET_TIME_TRIGGER = os.environ.get('RESET_TIME_TRIGGER', '6,19,20,10,30').split(',')
 # day, start_hour, end_hour
 SEND_TIME_TRIGGER = os.environ.get('SEND_TIME_TRIGGER', '0,7,8').split(',')
-FIRED_TIME_TRIGGER = os.environ.get('SEND_TIME_TRIGGER', '6,15,16').split(',')
+FIRED_TIME_TRIGGER = os.environ.get('SEND_TIME_TRIGGER', '6,18,19').split(',')
 
 VIBER_AVATAR = 'https://i.postimg.cc/CL3kfH6q/viber-bot-avatar.png'
 VIBER_BOT_NAME = 'Як ви? Де ви?'
@@ -68,7 +68,8 @@ else:
     DJANGO_LOGGER_LEVEL = 'INFO'
 
 if IS_LOCAL_ENV == 1:
-    REDIS_URI = f'redis://localhost:6379/{REDIS_DB}'
+    # REDIS_URI = f'redis://localhost:6379/{REDIS_DB}'
+    REDIS_URI = f'rediss://:{REDIS_PASSWORD}@{REDIS_APP_NAME}.redis.cache.windows.net:{REDIS_PORT}/{REDIS_DB}'
     PING_FILE = 'ping.csv'
     LOG_FILE_PATH = os.path.join('logs', 'debug_logs.log')
 
@@ -76,8 +77,6 @@ else:
     REDIS_URI = f'rediss://:{REDIS_PASSWORD}@{REDIS_APP_NAME}.redis.cache.windows.net:{REDIS_PORT}/{REDIS_DB}'
     PING_FILE = os.path.join('/home/site/wwwroot/logs/', 'ping.csv')
     LOG_FILE_PATH = os.path.join('/home/site/wwwroot/logs/', 'debug_logs.log')
-    # PING_FILE = 'ping.csv'
-    # LOG_FILE_PATH = os.path.join('logs', 'debug_logs.log')
 
 # REDIS KEYS
 REDIS_MESSAGE_QUEUE_KEY = 'steps-message-queue'

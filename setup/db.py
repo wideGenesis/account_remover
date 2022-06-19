@@ -22,11 +22,10 @@ password = os.environ.get('AZURE_SQL_DB_PASSWORD', 'ENV UNAVAILABLE')
 object_id = os.environ.get('AZURE_SQL_OBJECT_ID', 'ENV UNAVAILABLE')
 
 
-if project_settings.IS_LOCAL_ENV == 0:
-    connection_string = 'DRIVER=' + driver + ';SERVER=' + server + ';PORT=' + port + ';DATABASE=' + database + ';UID=' + object_id + ';Connection Timeout=' + timeout + ';Authentication=ActiveDirectoryMsi'
-    # connection_string = 'DRIVER=' + driver + ';SERVER=' + server + ';PORT=' + port + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password + ';Connection Timeout=' + timeout
-else:
+if project_settings.IS_LOCAL_ENV == 1:
     connection_string = 'DRIVER=' + driver + ';SERVER=' + server + ';PORT=' + port + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password + ';Connection Timeout=' + timeout
+else:
+    connection_string = 'DRIVER=' + driver + ';SERVER=' + server + ';PORT=' + port + ';DATABASE=' + database + ';UID=' + object_id + ';Connection Timeout=' + timeout + ';Authentication=ActiveDirectoryMsi'
 
 print("DB >>>>> ", connection_string)
 

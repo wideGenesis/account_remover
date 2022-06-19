@@ -26,19 +26,6 @@ LOGGING_INTERVAL = 60 * 5  # sec
 logger = CustomLogger.get_logger('flask')  #TODO ! FastApi
 
 
-async def get_graph_user_data(member_list: List[Tuple[str]]) -> List[str]:
-    success_ids = []
-    for userPrincipalName, member_id in member_list:
-        try:
-            await get_user(userPrincipalName, False)
-            logger.info('Get user graph data- %s', userPrincipalName)
-            success_ids.append(userPrincipalName)
-        except Exception:
-            logger.warning('Get user graph data error. User: %s', userPrincipalName)
-            continue
-        await asyncio.sleep(0.1)
-    return success_ids
-
 async def exclude_employee_if_bot_banned(member_id):
     sql_update = """UPDATE customers
                                 SET member_id = NULL,
@@ -167,67 +154,6 @@ async def send_message_reset():
     return
 
 
-async def search_fired_users():
-    sql_select = """WITH num_row AS (SELECT row_number() OVER (ORDER BY id) AS nom, * FROM customers 
-                                     WHERE member_id IS NOT NULL)
-                         SELECT aoem.userPrincipalName AS userPrincipalName,
-                                aoem.member_id AS member_id
-                         FROM num_row aoem
-                         WHERE nom BETWEEN (? - ?) AND ?"""
-
-    cursor = 3
-    limit = 3
-
-    while 1:
-        logger.debug('Try select customers from db')
-        with get_db_cursor() as cur:
-            try:
-                cur.execute(sql_select, cursor, limit, cursor)
-                db_result = cur.fetchall()
-            except Exception:
-                logger.exception('DB ERROR')
-                await asyncio.sleep(1)
-                continue
-
-        if not db_result:
-            logger.debug('No result. Finish')
-            break
-
-        logger.debug('Try to get user status from AD')
-        try:
-            success_ids = await get_graph_user_data(db_result)
-            logger.debug('!!! >>> Data from AD received. Success_ids: %s', success_ids)
-
-        except Exception:
-            logger.exception('get_graph_user_data error')
-            success_ids = None
-
-        if not success_ids:
-            logger.warning('get_graph_user_data WARNING')
-            await asyncio.sleep(5)
-            continue
-
-        placeholders = ', '.join(['?'] * len(success_ids))
-        sql_update_fired_user = """UPDATE customers
-                        SET member_id = NULL,
-                            conversation_reference = NULL,
-                            operator_displayName = 'user was fired'
-                        WHERE member_id IN (""" + placeholders + ")"
-
-        with get_db_cursor() as cur_update:
-            try:
-                res = cur_update.execute(sql_update_fired_user, success_ids)
-                logger.debug('Db updated for: %s, %s', success_ids, res)
-
-            except Exception:
-                logger.exception('DB ERROR')
-                await asyncio.sleep(2)
-                continue
-
-        cursor += limit + 1
-        await asyncio.sleep(1)
-
-
 async def proactive_message_worker(redis_cli: Redis):
     logger.warning('Starting proactive_message_worker')
 
@@ -260,42 +186,6 @@ async def proactive_message_worker(redis_cli: Redis):
                 await send_message()
             except Exception:
                 logger.exception('Send message error')
-                await asyncio.sleep(5)
-                continue
-
-        await asyncio.sleep(10)
-
-
-async def mark_fired_users_worker(redis_cli: Redis):
-    logger.warning('Starting mark_fired_users_worker')
-
-    last_logging_time = time.time()
-    last_health_time = time.time()
-
-    while 1:
-        if time.time() - last_logging_time > LOGGING_INTERVAL:
-            logger.info('Mark_fired_users_worker waiting the trigger time')
-            last_logging_time = time.time()
-
-        if time.time() - last_health_time > 30:
-            await redis_cli.set(project_settings.REDIS_DIRECT_MESSAGE_WORKER_HEALTH_CHECK_KEY, 1)
-            await redis_cli.expire(project_settings.REDIS_DIRECT_MESSAGE_WORKER_HEALTH_CHECK_KEY, 60)
-            last_health_time = time.time()
-
-        time_now = datetime.utcnow().replace(microsecond=0)
-        hour_now = time_now.hour
-        day_trigger = datetime.today().weekday()
-        # print('SEND >>>>>>', project_settings.SEND_TIME_TRIGGER)
-        time_trigger = int(project_settings.FIRED_TIME_TRIGGER[1]) <= hour_now < int(
-            project_settings.FIRED_TIME_TRIGGER[2])
-        # logger.debug('time_trigger %s, day_trigger %s, hour_now %s', time_trigger, day_trigger, hour_now)
-
-        if day_trigger == int(project_settings.FIRED_TIME_TRIGGER[0]) and time_trigger:
-            logger.info('All triggers are true, marking all relevant customers')
-            try:
-                await search_fired_users()
-            except Exception:
-                logger.exception('Error while marking fired users')
                 await asyncio.sleep(5)
                 continue
 
@@ -365,6 +255,122 @@ async def blob_remover_worker(redis_cli: Redis):
                 logger.exception('Error while deleting blobs')
                 await asyncio.sleep(5)
                 continue
+        await asyncio.sleep(10)
+
+
+async def get_graph_user_data(member_list: List[Tuple[str, str]]) -> List[str]:
+    success_ids = []
+    for userPrincipalName, member_id in member_list:
+        try:
+            data = await get_user(userPrincipalName, False)
+            logger.info('Get user graph data- %s', data)
+            if len(data) == 0:
+                success_ids.append(member_id)
+            else:
+                pass
+        except Exception:
+            logger.warning('Get user graph data error. User: %s', userPrincipalName)
+            continue
+        await asyncio.sleep(0.1)
+    return success_ids
+
+
+async def search_fired_users():
+    sql_select = """WITH num_row AS (SELECT row_number() OVER (ORDER BY id) AS nom, * FROM customers 
+                                     WHERE member_id IS NOT NULL)
+                         SELECT aoem.userPrincipalName AS userPrincipalName,
+                                aoem.member_id AS member_id
+                         FROM num_row aoem
+                         WHERE nom BETWEEN (? - ?) AND ?"""
+
+    cursor = 3
+    limit = 3
+
+    while 1:
+        logger.debug('Try select customers from db for fired')
+        with get_db_cursor() as cur:
+            try:
+                cur.execute(sql_select, cursor, limit, cursor)
+                db_result = cur.fetchall()
+                logger.debug('db_result %s >>> ', db_result)
+
+            except Exception:
+                logger.exception('DB ERROR')
+                await asyncio.sleep(1)
+                continue
+
+        if not db_result:
+            logger.debug('No result. Finish')
+            break
+
+        logger.debug('Try to get user status from AD')
+        try:
+            success_ids = await get_graph_user_data(db_result)
+            logger.debug('!!! >>> Data from AD received. Success_ids: %s', success_ids)
+        except Exception:
+            logger.exception('get_graph_user_data error')
+            success_ids = None
+
+        if not success_ids:
+            logger.warning('get_graph_user_data WARNING')
+            cursor += limit + 1
+            await asyncio.sleep(1)
+            continue
+
+        placeholders = ', '.join(['?'] * len(success_ids))
+        sql_update_fired_user = """UPDATE customers
+                                   SET member_id = NULL,
+                                       conversation_reference = NULL,
+                                       operator_displayName = 'user was fired'
+                                   WHERE member_id IN (""" + placeholders + ")"
+
+        with get_db_cursor() as cur_update:
+            try:
+                print('>>>>>>>>> <<<<<<<<<', sql_update_fired_user)
+                res = cur_update.execute(sql_update_fired_user, success_ids)
+                logger.debug('Db updated for: %s, %s', success_ids, res)
+
+            except Exception:
+                logger.exception('DB ERROR')
+                await asyncio.sleep(2)
+
+        cursor += limit + 1
+        await asyncio.sleep(1)
+
+
+async def mark_fired_users_worker(redis_cli: Redis):
+    logger.warning('Starting mark_fired_users_worker')
+
+    last_logging_time = time.time()
+    last_health_time = time.time()
+
+    while 1:
+        if time.time() - last_logging_time > LOGGING_INTERVAL:
+            logger.info('Mark_fired_users_worker waiting the trigger time')
+            last_logging_time = time.time()
+
+        if time.time() - last_health_time > 30:
+            await redis_cli.set(project_settings.REDIS_DIRECT_MESSAGE_WORKER_HEALTH_CHECK_KEY, 1)
+            await redis_cli.expire(project_settings.REDIS_DIRECT_MESSAGE_WORKER_HEALTH_CHECK_KEY, 60)
+            last_health_time = time.time()
+
+        time_now = datetime.utcnow().replace(microsecond=0)
+        hour_now = time_now.hour
+        day_trigger = datetime.today().weekday()
+        # print('SEND >>>>>>', project_settings.SEND_TIME_TRIGGER)
+        time_trigger = int(project_settings.FIRED_TIME_TRIGGER[1]) <= hour_now < int(
+            project_settings.FIRED_TIME_TRIGGER[2])
+        # logger.debug('time_trigger %s, day_trigger %s, hour_now %s', time_trigger, day_trigger, hour_now)
+
+        if day_trigger == int(project_settings.FIRED_TIME_TRIGGER[0]) and time_trigger:
+            logger.info('All triggers are true, marking all relevant customers')
+            try:
+                await search_fired_users()
+            except Exception:
+                logger.exception('Error while marking fired users')
+                await asyncio.sleep(5)
+                continue
+
         await asyncio.sleep(10)
 
 

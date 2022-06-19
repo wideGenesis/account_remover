@@ -34,11 +34,9 @@ async def get_graph_user_data(member_list: List[Tuple[str]]) -> List[str]:
             logger.info('Get user graph data- %s', userPrincipalName)
             success_ids.append(userPrincipalName)
         except Exception:
-            logger.exception('Get user graph data error. User: %s', userPrincipalName)
+            logger.warning('Get user graph data error. User: %s', userPrincipalName)
             continue
-
-        await asyncio.sleep(5)
-
+        await asyncio.sleep(0.1)
     return success_ids
 
 async def exclude_employee_if_bot_banned(member_id):
@@ -171,14 +169,14 @@ async def send_message_reset():
 
 async def search_fired_users():
     sql_select = """WITH num_row AS (SELECT row_number() OVER (ORDER BY id) AS nom, * FROM customers 
-                                     WHERE aoem.member_id IS NOT NULL)
+                                     WHERE member_id IS NOT NULL)
                          SELECT aoem.userPrincipalName AS userPrincipalName,
                                 aoem.member_id AS member_id
                          FROM num_row aoem
                          WHERE nom BETWEEN (? - ?) AND ?"""
 
-    cursor = 100
-    limit = 100
+    cursor = 3
+    limit = 3
 
     while 1:
         logger.debug('Try select customers from db')
@@ -188,16 +186,17 @@ async def search_fired_users():
                 db_result = cur.fetchall()
             except Exception:
                 logger.exception('DB ERROR')
-                await asyncio.sleep(10)
+                await asyncio.sleep(1)
                 continue
 
         if not db_result:
             logger.debug('No result. Finish')
             break
+
         logger.debug('Try to get user status from AD')
         try:
             success_ids = await get_graph_user_data(db_result)
-            logger.debug('!!! >>> Messages was send to : %s', success_ids)
+            logger.debug('!!! >>> Data from AD received. Success_ids: %s', success_ids)
 
         except Exception:
             logger.exception('get_graph_user_data error')
@@ -205,28 +204,28 @@ async def search_fired_users():
 
         if not success_ids:
             logger.warning('get_graph_user_data WARNING')
-            await asyncio.sleep(10)
+            await asyncio.sleep(5)
             continue
 
         placeholders = ', '.join(['?'] * len(success_ids))
-        sql_update = """UPDATE customers
+        sql_update_fired_user = """UPDATE customers
                         SET member_id = NULL,
                             conversation_reference = NULL,
                             operator_displayName = 'user was fired'
                         WHERE member_id IN (""" + placeholders + ")"
 
-        with get_db_cursor() as cur:
+        with get_db_cursor() as cur_update:
             try:
-                cur.execute(sql_update, success_ids)
-                logger.debug('Db updated for: %s', success_ids)
+                res = cur_update.execute(sql_update_fired_user, success_ids)
+                logger.debug('Db updated for: %s, %s', success_ids, res)
 
             except Exception:
                 logger.exception('DB ERROR')
-                await asyncio.sleep(5)
+                await asyncio.sleep(2)
                 continue
 
         cursor += limit + 1
-        await asyncio.sleep(60)
+        await asyncio.sleep(1)
 
 
 async def proactive_message_worker(redis_cli: Redis):
@@ -419,8 +418,6 @@ async def ping():
                 continue
 
         await asyncio.sleep(60)
-
-
 
 
 def run():

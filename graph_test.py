@@ -15,14 +15,13 @@ from graph.graph_client import client
 async def loop_graph():
     for i in [
         'tatyana.barabash@metinvest.digital',
-        'viktoriya.nartenko@metinvest.digital',
-        'konstantin.zuev@metinvest.digital',
-        'y.v.nalivayko@metinvest.digital',
-        'aleksandra.dulich@metinvest.digital',
-        '70001281',
-        'viktor.malichenko@metinvest.digital',
-        'andrey.maslov@metinvest.digital',
-        'ruslan.zhemirov@metinvest.digital'
+        'viktoriya.nartenko@metinvestholding.com',
+        'konstantin.zuev@metinvestholding.com',
+        'y.v.nalivayko@metinvestholding.com',
+        'aleksandra.dulich@metinvestholding.com',
+        'viktor.malichenko@metinvestholding.com',
+        'andrey.maslov@metinvestholding.com',
+        'ruslan.zhemirov@metinvestholding.com'
     ]:
         await get_user(i, False)
 

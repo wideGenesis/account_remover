@@ -21,6 +21,13 @@ msgraph-async = ">=0.1.9"
 aiohttp = "^3.8.1"
 APScheduler = "^3.9.1"
 uvloop = "^0.16.0"
+pytz = "*"
+tzlocal = "*"
+attrs = ">=17.3.0"
+frozenlist = ">=1.1.1"
+multidict = ">=4.5"
+yarl = "*"
+aiosmtplib = "^1.1.6"
 
 [tool.poetry.dev-dependencies]
 

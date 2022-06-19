@@ -141,7 +141,7 @@ async def get_user(search_request: str, manager=False):
     all_user_data.pop('onPremisesExtensionAttributes')
 
     if not manager:
-        print('\n', all_user_data)
+        # print('\n', all_user_data)
         return user_data
 
     is_manager_exists = None
@@ -177,5 +177,5 @@ async def get_user(search_request: str, manager=False):
             None
         ]
 
-    print(all_user_data)
+    # print(all_user_data)
     return all_user_data

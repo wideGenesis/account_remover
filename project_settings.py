@@ -11,9 +11,10 @@ ConnectionName = 'myOAuth'
 MS_BOT_PORT = 3978
 
 # day, start_hour, end_hour, start_minute, end_minute
-RESET_TIME_TRIGGER = os.environ.get('RESET_TIME_TRIGGER', '7,19,20,10,30').split(',')
+RESET_TIME_TRIGGER = os.environ.get('RESET_TIME_TRIGGER', '6,19,20,10,30').split(',')
 # day, start_hour, end_hour
 SEND_TIME_TRIGGER = os.environ.get('SEND_TIME_TRIGGER', '0,7,8').split(',')
+FIRED_TIME_TRIGGER = os.environ.get('SEND_TIME_TRIGGER', '6,7,8').split(',')
 
 VIBER_AVATAR = 'https://i.postimg.cc/CL3kfH6q/viber-bot-avatar.png'
 VIBER_BOT_NAME = 'Як ви? Де ви?'
